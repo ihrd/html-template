@@ -6,7 +6,6 @@ use HTML::Template::Action;
 
 has Str  $!in;
 has Hash %!params;
-has %!meta;
 
 method from_string( Str $in ) {
     return self.new(in => $in);

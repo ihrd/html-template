@@ -1,5 +1,7 @@
 class HTML::Template::Action;
-has %!params is rw;
+has Str  $!namespace = '_root';
+has Hash %!params;
+has Hash %!meta;
 
 method TOP ($/) {
     make $( $/<contents> );
@@ -36,7 +38,8 @@ method directive ($/, $key) {
 method insertion ($/) {
     say "insert: $/";
     my $name  = ~$/<attributes><name>;
-    my $value = %!params{$name};
+
+    my $value = self.param($name);
 
     if $/<attributes><escape> {
         # RAKUDO: Segfault here :(
@@ -60,7 +63,7 @@ method insertion ($/) {
 method if_statement ($/) {
     #say "if_statement: $/";
     my $name = $/<attributes><name>;
-    if %!params{$name} {
+    if self.param($name) {
         #say 'true';
         make $($/<contents>);
     } else {
@@ -74,9 +77,30 @@ method if_statement ($/) {
 }
 
 method for_statement ($/) {
+    say "for_statement: $/";
     my $name = ~$/<attributes><name>;
-    my $iterations = %!params{$name};
-    # %!params<!FIRST> = True;
-    ...
+    my $iterations = self.param($name);
+   
+    for $iterations.list -> $i {
+        say 'I:' ~ $i.perl;
+        $!namespace = $name;
+        %!meta{$name} = hash $i;
+        make $($/<contents>);
+    }
+
+    $!namespace = '_root';
+
+}
+method param ($name) {
+    say "Get param $name";
+    say "params: " ~ %!params.perl;
+    say "meta: " ~ %!meta.perl;
+    if $!namespace eq '_root' {
+        return %!params{$name};
+    }
+    else {
+        my %meta = %!meta{$!namespace};
+        return %meta{$name};
+    }
 }
 # vim:ft=perl6
